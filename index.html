@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Приглашение на свидание</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #fff0f5);
+    --text: var(--tg-theme-text-color, #3a2e39);
+    --accent: #ff5c8a;
+    --accent-dark: #e84b78;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, #ffe3ec 0%, #ffd1e0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 32px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(232, 75, 120, 0.15);
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .emoji { font-size: 48px; margin-bottom: 8px; }
+  h1 { font-size: 22px; margin: 8px 0 12px; color: var(--accent-dark); }
+  p.subtitle { color: #8a7a85; font-size: 15px; margin-bottom: 24px; line-height: 1.4; }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .option-btn {
+    background: #fff5f8;
+    border: 2px solid #ffd6e2;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 16px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .option-btn:active { transform: scale(0.97); }
+  .option-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 600;
+  }
+  .main-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    width: 100%;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .main-btn:disabled { opacity: 0.4; }
+  .summary {
+    background: #fff5f8;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ffd6e2; }
+  .dot.active { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Экран 1: Приветствие -->
+  <div class="screen active" id="screen-welcome">
+    <div class="emoji">💌</div>
+    <h1>Тебя пригласили на свидание!</h1>
+    <p class="subtitle">Кто-то очень хочет провести с тобой время. Готова узнать детали?</p>
+    <button class="main-btn" onclick="goTo('place')">Я согласна 💕</button>
+  </div>
+
+  <!-- Экран 2: Выбор места -->
+  <div class="screen" id="screen-place">
+    <div class="progress"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+    <h1>Куда хочешь сходить?</h1>
+    <div class="options" id="place-options">
+      <button class="option-btn" data-value="🍣 Суши">🍣 Суши</button>
+      <button class="option-btn" data-value="☕ Кафе">☕ Кафе</button>
+      <button class="option-btn" data-value="🎬 Кино">🎬 Кино</button>
+      <button class="option-btn" data-value="🌳 Парк">🌳 Парк</button>
+      <button class="option-btn" data-value="✨ Придумаем вместе">✨ Придумаем вместе</button>
+    </div>
+    <button class="main-btn" id="place-next" disabled onclick="goTo('date')">Дальше</button>
+  </div>
+
+  <!-- Экран 3: Выбор даты -->
+  <div class="screen" id="screen-date">
+    <div class="progress"><div class="dot active"></div><div class="dot active"></div><div class="dot"></div></div>
+    <h1>Когда встречаемся?</h1>
+    <div class="options" id="date-options">
+      <button class="option-btn" data-value="Сегодня">Сегодня</button>
+      <button class="option-btn" data-value="Завтра">Завтра</button>
+      <button class="option-btn" data-value="На выходных">На выходных</button>
+      <button class="option-btn" data-value="Пусть будет сюрприз">Пусть будет сюрприз</button>
+    </div>
+    <button class="main-btn" id="date-next" disabled onclick="goTo('confirm')">Дальше</button>
+  </div>
+
+  <!-- Экран 4: Подтверждение -->
+  <div class="screen" id="screen-confirm">
+    <div class="progress"><div class="dot active"></div><div class="dot active"></div><div class="dot active"></div></div>
+    <div class="emoji">🎉</div>
+    <h1>Всё верно?</h1>
+    <div class="summary">
+      <div>📍 Место: <b id="summary-place"></b></div>
+      <div>📅 Дата: <b id="summary-date"></b></div>
+    </div>
+    <button class="main-btn" onclick="sendInvite()">💌 Отправить</button>
+  </div>
+
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  const state = { place: null, date: null };
+
+  function goTo(screenName) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screenName).classList.add('active');
+    if (screenName === 'confirm') {
+      document.getElementById('summary-place').textContent = state.place;
+      document.getElementById('summary-date').textContent = state.date;
+    }
+  }
+
+  function setupOptions(containerId, nextBtnId, stateKey) {
+    const container = document.getElementById(containerId);
+    const nextBtn = document.getElementById(nextBtnId);
+    container.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state[stateKey] = btn.dataset.value;
+        nextBtn.disabled = false;
+      });
+    });
+  }
+
+  setupOptions('place-options', 'place-next', 'place');
+  setupOptions('date-options', 'date-next', 'date');
+
+  function sendInvite() {
+    const payload = JSON.stringify({
+      place: state.place,
+      date: state.date
+    });
+    tg.sendData(payload);
+    tg.close();
+  }
+</script>
+
+</body>
+</html>
